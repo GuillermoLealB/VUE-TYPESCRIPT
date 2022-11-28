@@ -1,7 +1,7 @@
 <template>
 
   <div class="headerContainer">
-    <p>Make your own Tasks</p>
+    <p class="title"> <b> Make your own Counts </b></p>
     <p>PROVE CRUD</p>
   </div>
 
@@ -19,77 +19,38 @@
         <input type="number" class="form-control" placeholder="00.00" aria-label="Username"
           aria-describedby="basic-addon1" v-model="inpCost">
       </div>
-
-      <button type="submit" class="send-bttn" @click.prevent="addProduct" :disabled="disableAdd">insertar </button>
+      <select class="selected" v-model="selected">
+          <option disabled  >Select one</option>
+          <option selected  value=1>Accesory</option>
+          <option value=2>Electronic</option>
+          <option value=3>Consumables</option>
+          </select>
+      <button type="submit" class="send-bttn add-bttn" @click.prevent="addProduct" :disabled="disableAdd">add </button>
     </div>
   </form>
-
-
-
-  <!--<table class="table table-hover">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Nombre</th>
-        <th scope="col">Precio</th>
-        <th scope="col">Opciones</th>
-      </tr>
-    </thead>
-    <tbody class="content-table">
-      <tr v-for="(element, index) in list" :key="index" ref="list">
-        <th scope="row"><input type="checkbox"></th>
-        <td>
-          <div v-if="!element.check">
-            {{ element.product }}
-          </div>
-          <div v-if="element.check">
-            <input type="string" v-model="newProduct">
-          </div>
-        </td>
-        <td>
-
-          <div v-if="!element.check">
-            ${{ element.cost }}
-          </div>
-          <div v-if="element.check">
-            <input v-model="newCost"  type="number">
-          </div>
-          
-        </td>
-        <td>
-          <div class="order-icons" v-if="!element.check">
-            <span @click="modifyProduct(index)"><i class="bi bi-pencil"></i></span>
-            <span @:click="deleteProduct(index)"><i class="bi bi-trash"></i></span>
-            <span><i class="bi bi-caret-down-square"></i></span>
-            <span><i class="bi bi-caret-up-square"></i></span>
-          </div>
-
-          <div class="button-order" v-if="element.check">
-            <button class="btn btn-primary" @click="okClick(index)">Ok</button>
-            <button class="btn btn-secondary" @click="nokClick(index)">Cancel</button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>-->
-
-
 
   <table class="table table-hover">
     <thead>
       <tr>
-        <th scope="col">#</th>
-        <th scope="col">Nombre</th>
-        <th scope="col">Precio</th>
-        <th scope="col">Opciones</th>
+        <th scope="col">Type</th>
+        <th scope="col">Product</th>
+        <th scope="col">Price</th>
+        <th scope="col" class="option-Tittle">Options</th>
       </tr>
     </thead>
     <tbody class="content-table">
       <tr v-for="(element, index) in dataApi" :key="index">
-        <th scope="row"><input type="checkbox"></th>
+        <th scope="row">
+          <div v-if="index != idModify">{{element.idCategory}}</div>
+          <select  v-if="index == idModify" class="selected" v-model="newSelected">
+          <option disabled >Select one</option>
+          <option selected  value=1>Accesory</option>
+          <option value=2>Electronic</option>
+          <option value=3>Consumables</option></select>
+        </th>
         <td>
           <div v-if="index != idModify">
-            {{ element.descripcion }}
+            {{ element.name }}
           </div>
           <div>
             <input v-if="index == idModify" v-model="newProduct" type="string">
@@ -98,24 +59,23 @@
         <td>
 
           <div v-if="index != idModify">
-            ${{ element.precio }}
+            ${{ element.price }}
           </div>
           <div>
-            <input v-if="index == idModify" v-model="newCost" t type="number" >
+            <input v-if="index == idModify" v-model="newCost" t type="number">
           </div>
 
         </td>
         <td>
           <div v-if="index != idModify" class="order-icons">
             <span @click="modifyProduct(index)"><i class="bi bi-pencil"></i></span>
-            <span @:click="deleteProduct(element.idProducto)"><i class="bi bi-trash"></i></span>
-            <span><i class="bi bi-caret-down-square"></i></span>
-            <span><i class="bi bi-caret-up-square"></i></span>
+            <span @:click="deleteProduct(element.id)"><i class="bi bi-trash"></i></span>
+
           </div>
 
           <div v-if="index == idModify" class="button-order">
-            <button class="btn btn-primary" @click="okClick(element.idProducto,newProduct,newCost)">Ok</button>
-            <button class="btn btn-secondary" @click="nokClick(index)">Cancel</button>
+            <button class="btn btn-primary" @click="okClick(element.id, newProduct, newCost,newSelected)">Ok</button>
+            <button class="btn btn-secondary" @click="nokClick">Cancel</button>
           </div>
 
         </td>
@@ -123,159 +83,149 @@
 
     </tbody>
   </table>
-
-  <button @click="listApi('http://localhost:5003/api/Producto/Lista')">Api</button>
+  <div class="Total">TOTAL: ${{TotalCount}}</div>
 </template>
   
 <script lang="ts">
-import { arrayExpression, objectExpression, throwStatement } from '@babel/types';
+
 import { computed, defineComponent, watch } from 'vue'
 import { ref } from 'vue'
-interface List {
-  product: string | null | undefined | "",
-  cost: number | undefined | "" | null,
-  check: boolean
-}
-interface DataApi {
-  descripcion?:string
-  precio?:number 
-  Marca?: number
-}
 
+interface Response {
+    id?:         number;
+    name:       string | null;
+    price:      number | null |"";
+    idCategory: number | undefined;
+    oCategory?:   null;
+}
 export default defineComponent({
   name: 'RegisterProduct',
-
+  
   data() {
-
     return {
       newCost: ref<number>(),
       newProduct: ref<string>(),
+      newSelected: ref<number>(),
       check1: ref<boolean>(true),
       check2: ref<boolean>(true),
-      checkIcon: ref<boolean>(false),
-      inpProduct: ref<string | null>(null),
-      inpCost: (null) as number | null | "",
-      inf: ({}) as List,
-      list: Array<List>(),
+      check3: ref<boolean>(true),
+      inpProduct: "" as string | null ,
+      inpCost: {} as number |null |"",
+      inpCategory: {} as number | null,
       dataApi: [] as any,
-      idModify: ref<number| null> (null),
-      checkModify: ref<boolean>(),
-      contentAPi: Array<any>([this.dataApi],[this.modify])
+      idModify: ref<number | null>(null),
+      contentAPi: ref<Response>(),
+      selected: ref<number>(),
+      total: ref<number>()
     }
   },
   methods: {
 
     addProduct(): void {
-      // this.inf = {
-      //   product: this.inpProduct,
-      //   cost: this.inpCost,
-      //   check: false,
-      // };
-      let sendInfJSONP = {
-        codigoBarra: null,
-        descripcion: this.inpProduct,
-        marca: null,
-        idCategoria: 3,
-        precio: this.inpCost,
+
+      let sendInfJSONP: Response = {
+        name: this.inpProduct,
+        price: this.inpCost,
+        idCategory: this.selected
       }
-      fetch('http://localhost:5003/api/Producto/Save', {
-        method: 'POST', 
+      fetch('http://localhost:5048/api/Product/Add', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sendInfJSONP),
-      }).then(()=> this.listApi("http://localhost:5003/api/Producto/Lista"))
-      
+      }).then(() => this.listApi("http://localhost:5048/api/Product/List"))
+      this.inpCost = null
+      this.inpProduct = null
+
     },
 
     deleteProduct(id: number): void {
-      //this.list.splice(value, 1);
-      fetch('http://localhost:5003/api/Producto/Delete/' + id, { method: 'DELETE' })
-    .then(()=> this.listApi('http://localhost:5003/api/Producto/Lista'));
+      fetch('http://localhost:5048/api/Product/Delete/' + id, { method: 'DELETE' })
+        .then(() => this.listApi('http://localhost:5048/api/Product/List'));
     },
 
     modifyProduct(id: number): void {
+      this.newCost = this.dataApi[id].price
+      this.newProduct = this.dataApi[id].name
+      this.newSelected = this.dataApi[id].idCategory
+      this.idModify = id
 
-      // fetch('http://localhost:5003/api/Producto/Modify', {
-      //   method: 'PUT', 
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({idProducto:id,Marca: "Modify"}),
-      // }).then()
-      this.newCost=this.dataApi[id].precio
-      this.newProduct=this.dataApi[id].descripcion
-      this.idModify=id
-      console.log(this.idModify)
-      // this.newCost = this.list[value].cost
-      // this.newProduct = this.list[value].product
-      // this.list[value].check = true;
     },
 
-    okClick(index: number, product?:string, price?:number) {
-      fetch('http://localhost:5003/api/Producto/Modify', {
-        method: 'PUT', 
+    okClick(index: number, product?: string, dollars?: number,category ?: number) {
+      fetch('http://localhost:5048/api/Product/Modify', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({idProducto:index,Descripcion: product,Precio: price}),
-      }).then(()=> this.listApi('http://localhost:5003/api/Producto/Lista'))
-      this.idModify= null
-  
-      // this.list[index].cost = this.newCost
-      // this.list[index].product = this.newProduct
-      // this.list[index].check = false
-
+        body: JSON.stringify({ id: index, name: product, price: dollars, idCategory:category }),
+      }).then(() => this.listApi('http://localhost:5048/api/Product/List'))
+      this.idModify = null
     },
 
-    nokClick(index: number) {
-      // this.list[index].check = false
-      this.idModify= null
+    nokClick() {
+      this.idModify = null
     },
 
     async listApi(api: string) {
-      interface Data {
-        msg: string,
-        plc: Array<string>
-      }
       let reque = await fetch(api)
       let resultado = await reque.json()
-      this.dataApi = resultado.reponse;
-      this.contentAPi[0]=this.dataApi
-      console.log(this.dataApi)
+      this.dataApi = resultado.response;
+      this.contentAPi = resultado.response;
       
-      // let jason:object= { 
-      //   msg: "music",
-      //   plc: ["juan"," meme","lol"]
-      // }
-      // let data:Data = jason 
-      // for (const i of jason.plc) {
-      //   console.log(data)
-      // }
+    },
 
+     proveAPI() {
+      // let reque = await fetch("http://localhost:5048/api/Product/List")
+      // let resultado = await reque.json()
+      // this.contentAPi = resultado.response;
+      // console.log(this.contentAPi)
+      console.log(this.selected)
+      console.log(this.check3)
     }
   },
 
   watch: {
     inpProduct: function (): void {
       this.check1 = this.inpProduct == null || this.inpProduct == "" ? true : false;
+      console.log(this.disableAdd)
     },
 
     inpCost: function (): void {
       this.check2 = this.inpCost == null || this.inpCost == "" ? true : false;
+      console.log(this.disableAdd)
+    },
 
+    selected:function():void {
+
+      this.check3=this.selected == undefined ?true :false
     }
 
   },
   created: function () {
-    this.listApi("http://localhost:5003/api/Producto/Lista")
+    this.listApi("http://localhost:5048/api/Product/List")
   },
 
   computed: {
-    disableAdd() {
-      if (this.check2 || this.check1)
-        return true
-      else return false
+    disableAdd():boolean{
+      
+      if ((this.check2 || this.check1)==false) 
+       { if (this.check3 ==false)
+        return false
+      else return true}
+      else return true
+    },
+
+    TotalCount(): any{
+      var totally =0
+      for (let index = 0; index < this.dataApi.length; index++) {
+        
+        totally = this.dataApi[index].price + totally
+      }
+
+      return totally
+      
     }
   }
 })
@@ -283,6 +233,16 @@ export default defineComponent({
 </script>
   
 <style scoped>
+
+.title{
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 4rem;
+}
+
+.add-bttn{
+  width: 40rem;
+  height: 200rem;
+}
 .two-input {
   display: flex;
 
@@ -290,6 +250,11 @@ export default defineComponent({
 
 .send-bttn {
   height: 38PX;
+}
+
+.selected{
+  height: 37px;
+  
 }
 
 .headerContainer {
@@ -304,6 +269,10 @@ export default defineComponent({
   display: flex;
   justify-content: space-around;
 
+}
+.option-Tittle{
+  display: flex;
+  justify-content: center;
 }
 
 .order-icons {
@@ -320,5 +289,13 @@ export default defineComponent({
   color: #00ff00;
   transition: color 250ms, ;
 }
+
+.Total{
+  font-size: 5rem;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
 </style>
   
