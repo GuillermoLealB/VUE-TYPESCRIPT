@@ -1,4 +1,4 @@
-In SRC/components is there my component with all my progrmation using vue.
+In SRC/components are there my component(RegisterProduct.vue) with all my progrmation using vue.
 For obviously reason i dont built the project , because it is necessary that i show you the components
 
 This was an interesting project , i had to learn more about vue for develop it , im a programmer autodidact and i always wanna learn more and more because im fall in love with the progrmation, i want to put all my knowledge and time in real projects, for to develop my skills and learn how to be better in the area.
